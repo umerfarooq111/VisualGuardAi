@@ -1,0 +1,39 @@
+# ==============================================================================
+# Git Ignore - VisualGuard AI Backend
+# ==============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Environment Variables & Secrets (CRITICAL: Never commit secrets)
+.env
+.env.*
+!.env.example
+
+# Media Storage Directories (Track directory with .gitkeep, ignore files)
+uploads/*
+!uploads/.gitkeep
+outputs/*
+!outputs/.gitkeep
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
