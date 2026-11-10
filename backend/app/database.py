@@ -61,3 +61,20 @@ def check_db_connection() -> Tuple[bool, str]:
     except Exception as exc:
         return False, f"PostgreSQL connection failed: {str(exc)}"
 
+
+def ensure_default_user() -> None:
+    """
+    Ensure at least one default user (user_id=1) exists in the User table
+    for linking media uploads prior to user registration/authentication.
+    """
+    try:
+        from app.models.user import User
+
+        with SessionLocal() as db:
+            user = db.query(User).filter(User.user_id == 1).first()
+            if not user:
+                db.add(User(user_id=1))
+                db.commit()
+    except Exception:
+        pass
+

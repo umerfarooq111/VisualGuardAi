@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routes.system import router as system_router
+from app.routes.videos import router as videos_router
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -32,6 +33,7 @@ app.add_middleware(
 
 # Register routes
 app.include_router(system_router)
+app.include_router(videos_router)
 
 
 if __name__ == "__main__":

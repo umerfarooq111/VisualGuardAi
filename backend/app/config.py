@@ -71,6 +71,17 @@ class Settings(BaseSettings):
         description="Directory for storing processed privacy-protected media outputs.",
     )
 
+    # 6. File Upload Limits
+    MAX_UPLOAD_SIZE_MB: int = Field(
+        default=100,
+        description="Maximum allowed video upload size in Megabytes.",
+    )
+
+    @property
+    def max_upload_size_bytes(self) -> int:
+        """Return the maximum allowed upload size in bytes."""
+        return self.MAX_UPLOAD_SIZE_MB * 1024 * 1024
+
     @field_validator("UPLOAD_DIR", "OUTPUT_DIR", mode="before")
     @classmethod
     def resolve_storage_path(cls, value: Union[str, Path]) -> Path:

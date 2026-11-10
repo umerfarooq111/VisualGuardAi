@@ -37,3 +37,28 @@ htmlcov/
 .idea/
 *.swp
 *.swo
+# Virtual environments
+.venv/
+venv/
+backend/.venv/
+
+# Environment variables and secrets
+.env
+.env.*
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# Generated files
+backend/uploads/*
+backend/outputs/*
+
+# Keep empty directories
+!backend/uploads/.gitkeep
+!backend/outputs/.gitkeep
