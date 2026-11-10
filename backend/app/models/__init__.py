@@ -8,6 +8,7 @@ from app.models.detected_entity import DetectedEntity
 from app.models.detection import Detection
 from app.models.media import Media
 from app.models.processed_media import ProcessedMedia
+from app.models.processing_task import ProcessingTask
 from app.models.selected_object import SelectedObject
 from app.models.user import User
 
@@ -19,4 +20,5 @@ __all__ = [
     "DetectedEntity",
     "Detection",
     "SelectedObject",
+    "ProcessingTask",
 ]

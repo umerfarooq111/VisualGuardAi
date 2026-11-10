@@ -30,6 +30,11 @@ from app.schemas.processed_media import (
     ProcessedMediaListResponse,
     ProcessedMediaResponse,
 )
+from app.schemas.processing_task import (
+    ProcessingTaskCreate,
+    ProcessingTaskListResponse,
+    ProcessingTaskResponse,
+)
 from app.schemas.selected_object import (
     SelectedObjectBase,
     SelectedObjectCreate,
@@ -63,4 +68,7 @@ __all__ = [
     "SelectedObjectCreate",
     "SelectedObjectResponse",
     "SelectedObjectListResponse",
+    "ProcessingTaskCreate",
+    "ProcessingTaskResponse",
+    "ProcessingTaskListResponse",
 ]

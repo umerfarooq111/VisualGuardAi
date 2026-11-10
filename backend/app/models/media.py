@@ -25,6 +25,7 @@ class Media(Base):
     user = relationship("User", back_populates="media_items")
     processed_media_items = relationship("ProcessedMedia", back_populates="media", cascade="all, delete-orphan")
     detected_entities = relationship("DetectedEntity", back_populates="media", cascade="all, delete-orphan")
+    processing_tasks = relationship("ProcessingTask", back_populates="media", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Media(media_id={self.media_id}, file_name='{self.file_name}', user_id={self.user_id})>"
