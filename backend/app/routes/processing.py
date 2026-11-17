@@ -5,9 +5,10 @@ Processing Management Routes for VisualGuard AI
 Provides API endpoints for managing video processing tasks.
 
 Endpoints:
-  POST /api/processing/tasks       - Create a new processing task
-  GET  /api/processing/tasks       - List all tasks (paginated)
-  GET  /api/processing/tasks/{id}  - Get a specific task by ID
+  POST /api/processing/tasks                          - Create a new processing task
+  GET  /api/processing/tasks                          - List all tasks (paginated)
+  GET  /api/processing/tasks/{task_id}                - Get a specific task by ID
+  POST /api/processing/tasks/{task_id}/detections     - Ingest AI detection results
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -15,14 +16,18 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.schemas.processing_task import (
+    DetectionIngestionRequest,
+    DetectionIngestionResponse,
     ProcessingTaskCreate,
     ProcessingTaskListResponse,
     ProcessingTaskResponse,
+    SavedDetectionDetail,
 )
 from app.services.processing_service import (
     create_processing_task,
     get_task_by_id,
     get_tasks_list,
+    ingest_detections,
 )
 
 router = APIRouter(prefix="/api/processing", tags=["Processing"])
@@ -103,4 +108,60 @@ def get_task_endpoint(
             detail=f"Processing task with id={task_id} not found.",
         )
     return ProcessingTaskResponse.model_validate(task)
+
+
+@router.post(
+    "/tasks/{task_id}/detections",
+    response_model=DetectionIngestionResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Ingest AI detection results for a processing task",
+    description=(
+        "Accept one or more detection events from the AI pipeline and persist them "
+        "atomically into DETECTED_ENTITY and DETECTION tables. "
+        "Entities are de-duplicated by (tracking_id, entity_type) for the task's media. "
+        "confidence is always stored as NULL (not supplied by the pipeline)."
+    ),
+)
+def ingest_detections_endpoint(
+    task_id: int,
+    payload: DetectionIngestionRequest,
+    db: Session = Depends(get_db),
+) -> DetectionIngestionResponse:
+    """
+    Ingest detection results produced by the AI pipeline for a processing task.
+
+    - **task_id**: Must reference an existing ProcessingTask.
+    - **detections**: List of detection events (entity + frame bounding box).
+
+    Entity de-duplication:
+    - Existing DetectedEntity rows with the same (tracking_id, entity_type) for
+      the task's media_id are reused; new entities are created only when needed.
+
+    Transaction safety:
+    - All inserts happen in a single transaction. Any DB error triggers a full
+      rollback so no partial records are written.
+    """
+    task = get_task_by_id(db=db, task_id=task_id)
+    if not task:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Processing task with id={task_id} not found.",
+        )
+
+    result = ingest_detections(
+        db=db,
+        task=task,
+        detection_items=payload.detections,
+    )
+
+    return DetectionIngestionResponse(
+        task_id=task_id,
+        media_id=task.media_id,
+        entities_created=result["entities_created"],
+        entities_reused=result["entities_reused"],
+        detections_saved=result["detections_saved"],
+        detections=[
+            SavedDetectionDetail(**d) for d in result["saved_detection_details"]
+        ],
+    )
 

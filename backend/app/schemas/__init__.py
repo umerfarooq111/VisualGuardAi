@@ -29,11 +29,16 @@ from app.schemas.processed_media import (
     ProcessedMediaCreate,
     ProcessedMediaListResponse,
     ProcessedMediaResponse,
+    ProcessedOutputSaveRequest,
+    ProcessedOutputSaveResponse,
 )
 from app.schemas.processing_task import (
+    DetectionIngestionRequest,
+    DetectionIngestionResponse,
     ProcessingTaskCreate,
     ProcessingTaskListResponse,
     ProcessingTaskResponse,
+    SavedDetectionDetail,
 )
 from app.schemas.selected_object import (
     SelectedObjectBase,
@@ -56,6 +61,8 @@ __all__ = [
     "ProcessedMediaCreate",
     "ProcessedMediaResponse",
     "ProcessedMediaListResponse",
+    "ProcessedOutputSaveRequest",
+    "ProcessedOutputSaveResponse",
     "DetectedEntityBase",
     "DetectedEntityCreate",
     "DetectedEntityResponse",
@@ -71,4 +78,7 @@ __all__ = [
     "ProcessingTaskCreate",
     "ProcessingTaskResponse",
     "ProcessingTaskListResponse",
+    "DetectionIngestionRequest",
+    "DetectionIngestionResponse",
+    "SavedDetectionDetail",
 ]

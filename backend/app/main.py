@@ -10,6 +10,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
+from app.routes.outputs import router as outputs_router
 from app.routes.processing import router as processing_router
 from app.routes.results import router as results_router
 from app.routes.system import router as system_router
@@ -38,6 +39,7 @@ app.include_router(system_router)
 app.include_router(videos_router)
 app.include_router(processing_router)
 app.include_router(results_router)
+app.include_router(outputs_router)
 
 
 if __name__ == "__main__":
