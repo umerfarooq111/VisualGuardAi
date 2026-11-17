@@ -39,6 +39,8 @@ from app.schemas.processing_task import (
     ProcessingTaskListResponse,
     ProcessingTaskResponse,
     SavedDetectionDetail,
+    TaskFailRequest,
+    TaskProgressUpdate,
 )
 from app.schemas.selected_object import (
     SelectedObjectBase,
@@ -81,4 +83,6 @@ __all__ = [
     "DetectionIngestionRequest",
     "DetectionIngestionResponse",
     "SavedDetectionDetail",
+    "TaskProgressUpdate",
+    "TaskFailRequest",
 ]

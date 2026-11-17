@@ -5,10 +5,13 @@ Processing Management Routes for VisualGuard AI
 Provides API endpoints for managing video processing tasks.
 
 Endpoints:
-  POST /api/processing/tasks                          - Create a new processing task
-  GET  /api/processing/tasks                          - List all tasks (paginated)
-  GET  /api/processing/tasks/{task_id}                - Get a specific task by ID
-  POST /api/processing/tasks/{task_id}/detections     - Ingest AI detection results
+  POST  /api/processing/tasks                          - Create a new processing task
+  GET   /api/processing/tasks                          - List all tasks (paginated)
+  GET   /api/processing/tasks/{task_id}                - Get a specific task by ID
+  POST  /api/processing/tasks/{task_id}/start          - Start processing a pending task
+  PATCH /api/processing/tasks/{task_id}/progress       - Update task progress (0-100)
+  POST  /api/processing/tasks/{task_id}/fail           - Mark a task as failed
+  POST  /api/processing/tasks/{task_id}/detections     - Ingest AI detection results
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -22,12 +25,17 @@ from app.schemas.processing_task import (
     ProcessingTaskListResponse,
     ProcessingTaskResponse,
     SavedDetectionDetail,
+    TaskFailRequest,
+    TaskProgressUpdate,
 )
 from app.services.processing_service import (
     create_processing_task,
+    fail_processing_task,
     get_task_by_id,
     get_tasks_list,
     ingest_detections,
+    start_processing_task,
+    update_task_progress,
 )
 
 router = APIRouter(prefix="/api/processing", tags=["Processing"])
@@ -107,6 +115,80 @@ def get_task_endpoint(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Processing task with id={task_id} not found.",
         )
+    return ProcessingTaskResponse.model_validate(task)
+
+
+# ---------------------------------------------------------------------------
+# Task Lifecycle Management (Phase 6)
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/tasks/{task_id}/start",
+    response_model=ProcessingTaskResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Start a processing task",
+    description=(
+        "Transition a processing task from 'pending' to 'processing'. "
+        "Returns HTTP 400 if the task is already processing, completed, or failed."
+    ),
+)
+def start_task_endpoint(
+    task_id: int,
+    db: Session = Depends(get_db),
+) -> ProcessingTaskResponse:
+    """
+    Start processing a task. Sets status='processing'.
+    """
+    task = start_processing_task(db=db, task_id=task_id)
+    return ProcessingTaskResponse.model_validate(task)
+
+
+@router.post(
+    "/tasks/{task_id}/progress",
+    response_model=ProcessingTaskResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Update task progress (POST)",
+    description="Update the progress percentage (0.0 to 100.0) of a processing task.",
+)
+@router.patch(
+    "/tasks/{task_id}/progress",
+    response_model=ProcessingTaskResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Update task progress (PATCH)",
+    description="Update the progress percentage (0.0 to 100.0) of a processing task.",
+)
+def update_progress_endpoint(
+    task_id: int,
+    payload: TaskProgressUpdate,
+    db: Session = Depends(get_db),
+) -> ProcessingTaskResponse:
+    """
+    Update progress percentage (0.0 - 100.0).
+    """
+    task = update_task_progress(db=db, task_id=task_id, progress=payload.progress)
+    return ProcessingTaskResponse.model_validate(task)
+
+
+@router.post(
+    "/tasks/{task_id}/fail",
+    response_model=ProcessingTaskResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Mark a processing task as failed",
+    description=(
+        "Transition a processing task to 'failed' and store an error message. "
+        "Returns HTTP 400 if the task is already completed or failed."
+    ),
+)
+def fail_task_endpoint(
+    task_id: int,
+    payload: TaskFailRequest,
+    db: Session = Depends(get_db),
+) -> ProcessingTaskResponse:
+    """
+    Mark a task as failed and record error_message.
+    """
+    task = fail_processing_task(db=db, task_id=task_id, error_message=payload.error_message)
     return ProcessingTaskResponse.model_validate(task)
 
 

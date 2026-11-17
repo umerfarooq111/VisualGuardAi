@@ -6,6 +6,7 @@ Handles:
 - Creating processing task records in the PROCESSING_TASK table.
 - Validating that the referenced media exists.
 - Retrieving single tasks and paginated task lists.
+- Lifecycle management: starting tasks, updating progress, failure handling.
 - Ingesting AI detection results into DETECTED_ENTITY and DETECTION tables.
 """
 
@@ -116,6 +117,123 @@ def get_tasks_list(
         .all()
     )
     return items, total
+
+
+def get_task_or_404(db: Session, task_id: int) -> ProcessingTask:
+    """
+    Retrieve a processing task by its primary key, raising HTTP 404 if missing.
+    """
+    task = get_task_by_id(db, task_id)
+    if not task:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Processing task with id={task_id} not found.",
+        )
+    return task
+
+
+# ---------------------------------------------------------------------------
+# Task Lifecycle Management (Phase 6)
+# ---------------------------------------------------------------------------
+
+
+def start_processing_task(db: Session, task_id: int) -> ProcessingTask:
+    """
+    Start a pending processing task by updating its status to 'processing'.
+
+    Prevents starting tasks that are already 'processing', 'completed', or 'failed'.
+
+    Raises:
+        HTTPException (404): If task not found.
+        HTTPException (400): If task is not in 'pending' status.
+        HTTPException (500): On database error.
+    """
+    task = get_task_or_404(db, task_id)
+    if task.status != "pending":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot start task with id={task_id} because its current status is '{task.status}'. Only 'pending' tasks can be started.",
+        )
+
+    task.status = "processing"
+    try:
+        db.commit()
+        db.refresh(task)
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error while starting processing task: {str(exc)}",
+        )
+    return task
+
+
+def update_task_progress(db: Session, task_id: int, progress: float) -> ProcessingTask:
+    """
+    Update the progress (0.0 - 100.0) of a processing task.
+
+    Prevents updating progress for tasks that are already 'completed' or 'failed'.
+
+    Raises:
+        HTTPException (404): If task not found.
+        HTTPException (400): If task is already completed or failed.
+        HTTPException (500): On database error.
+    """
+    task = get_task_or_404(db, task_id)
+    if task.status in ("completed", "failed"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot update progress for task with id={task_id} because its status is '{task.status}'.",
+        )
+
+    task.progress = progress
+    try:
+        db.commit()
+        db.refresh(task)
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error while updating task progress: {str(exc)}",
+        )
+    return task
+
+
+def fail_processing_task(db: Session, task_id: int, error_message: str) -> ProcessingTask:
+    """
+    Mark a processing task as 'failed' and record the error message.
+
+    Prevents failing a task that is already completed or already failed.
+
+    Raises:
+        HTTPException (404): If task not found.
+        HTTPException (400): If task is already completed or failed.
+        HTTPException (500): On database error.
+    """
+    task = get_task_or_404(db, task_id)
+    if task.status == "completed":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot mark task with id={task_id} as failed because it is already completed.",
+        )
+    if task.status == "failed":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Task with id={task_id} is already marked as failed.",
+        )
+
+    task.status = "failed"
+    task.error_message = error_message
+    try:
+        db.commit()
+        db.refresh(task)
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error while marking task as failed: {str(exc)}",
+        )
+    return task
 
 
 # ---------------------------------------------------------------------------

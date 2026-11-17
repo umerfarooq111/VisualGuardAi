@@ -60,6 +60,38 @@ class ProcessingTaskListResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Task Lifecycle Management schemas (Phase 6)
+# ---------------------------------------------------------------------------
+
+
+class TaskProgressUpdate(BaseModel):
+    """
+    Request body for updating processing task progress.
+    Validates that progress is a percentage between 0.0 and 100.0.
+    """
+
+    progress: float = Field(
+        ...,
+        ge=0.0,
+        le=100.0,
+        description="Task progress percentage (0.0 to 100.0)",
+    )
+
+
+class TaskFailRequest(BaseModel):
+    """
+    Request body for marking a processing task as failed.
+    Requires a non-empty error message.
+    """
+
+    error_message: str = Field(
+        ...,
+        min_length=1,
+        description="Error message explaining why the task failed",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Detection ingestion schemas
 # ---------------------------------------------------------------------------
 

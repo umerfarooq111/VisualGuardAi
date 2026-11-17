@@ -137,6 +137,11 @@ def save_processed_output(
         HTTPException (500): filesystem or DB error.
     """
     task = _get_task_or_404(db, task_id)
+    if task.status == "failed":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot save processed output for a failed task (task_id={task_id}).",
+        )
     media_id = task.media_id
 
     # Validate extension
@@ -199,6 +204,7 @@ def save_processed_output(
 
         # Mark task completed — only after the output row is safely staged
         task.status = "completed"
+        task.progress = 100.0
         db.commit()
         db.refresh(record)
     except SQLAlchemyError as exc:
