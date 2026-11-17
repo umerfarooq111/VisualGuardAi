@@ -73,3 +73,27 @@ def test_get_db_dependency():
     with pytest.raises(StopIteration):
         next(db_gen)
 
+
+def test_cors_headers_and_preflight():
+    """Verify CORS preflight and response headers allow frontend interaction."""
+    # Preflight OPTIONS request
+    preflight = client.options(
+        "/api/videos",
+        headers={
+            "Origin": "http://localhost:5173",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "Content-Type",
+        },
+    )
+    assert preflight.status_code == 200
+    assert preflight.headers.get("access-control-allow-origin") == "http://localhost:5173"
+    assert preflight.headers.get("access-control-allow-credentials") == "true"
+    assert "POST" in preflight.headers.get("access-control-allow-methods", "")
+
+    # Normal GET with Origin header
+    get_res = client.get("/health", headers={"Origin": "http://localhost:3000"})
+    assert get_res.status_code == 200
+    assert get_res.headers.get("access-control-allow-origin") == "http://localhost:3000"
+    assert get_res.headers.get("access-control-allow-credentials") == "true"
+    assert "access-control-expose-headers" in get_res.headers
+
