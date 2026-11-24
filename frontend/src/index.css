@@ -1,0 +1,63 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #f5f7fa;
+  font-family: "Inter", sans-serif;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+a,
+input {
+  font: inherit;
+}
+
+button,
+a {
+  cursor: pointer;
+}
+
+.hero-grid {
+  background-image:
+    linear-gradient(rgba(15, 118, 110, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 118, 110, 0.06) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+
+.privacy-pixels {
+  background:
+    linear-gradient(90deg, rgba(7, 20, 33, 0.88) 50%, rgba(39, 73, 78, 0.9) 50%),
+    linear-gradient(rgba(20, 80, 83, 0.8) 50%, rgba(8, 32, 45, 0.88) 50%);
+  background-size: 12px 12px;
+  image-rendering: pixelated;
+  backdrop-filter: blur(9px);
+}
+
+input[type="range"] {
+  height: 6px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
+}
+
+::selection {
+  background: rgba(20, 184, 166, 0.22);
+}
